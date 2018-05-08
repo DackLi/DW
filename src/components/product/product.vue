@@ -43,11 +43,11 @@
           <div class="product-color">
             <div class="color-title">
               Color:
-              <span>black</span>
+              <span>{{selectColorVal}}</span>
             </div>
             <div class="color-list">
               <ul class="clearfix" v-if="product.info.color">
-                <li class="color-item" :class="{'active':colorIndex === 0}" v-for="(colorItem,colorIndex) in product.info.color" :key="colorIndex">
+                <li class="color-item" :class="{'active':colorIndex === selectColorIndex}" v-for="(colorItem,colorIndex) in product.info.color" :key="colorIndex" @click="changeColor(colorIndex,colorItem)">
                   <span :class="colorItem"></span>
                 </li>
               </ul>
@@ -59,11 +59,11 @@
           <div class="product-size">
             <div class="color-title">
               Size:
-              <span>SS</span>
+              <span>{{selectSzieVal}}</span>
             </div>
             <div class="size-list">
               <ul class="clearfix" v-if="product.info.size">
-                <li class="size-item" :class="{'active':szieIndex === 0}" v-for="(szieItem,szieIndex) in product.info.size" :key="szieIndex">
+                <li class="size-item" :class="{'active':szieIndex === selectSzieIndex}" v-for="(szieItem,szieIndex) in product.info.size" :key="szieIndex" @click="changeSzie(szieIndex,szieItem)">
                   {{szieItem}}
                 </li>
               </ul>
@@ -77,11 +77,11 @@
               QTY:
             </div>
             <div class="product-num-box">
-              <span class="num-btn" data-type='minus'>
+              <span class="num-btn" @click="changeNum('minus')">
                 <span class="num-minus iconfont icon-minus-o"></span>
               </span>
               <span class="qty">{{product.info.qty}}</span>
-              <span class="num-btn" data-type='add'>
+              <span class="num-btn" @click="changeNum('add')">
                 <span class="num-plus iconfont icon-add-o"></span>
               </span>
             </div>
@@ -89,15 +89,15 @@
           <!--E Product Num -->
 
           <!--S Add To Cart Btn -->
-          <button type="submit" class="add-to-cart">
+          <button type="submit" class="add-to-cart" @click="submite">
             ADD TO CART
           </button>
           <!--E Add To Cart Btn -->
 
           <!--S Product Description List -->
           <ul class="description-list">
-            <li class="description-list-item">
-              <a href="javascript:;">
+            <li class="description-list-item" ref="description">
+              <a href="javascript:;" @click="toggleTab($event)">
                 DESCRIPTION
                 <i class="iconfont icon-add-o"></i>
               </a>
@@ -110,8 +110,8 @@
                 </table>
               </div>
             </li>
-            <li class="description-list-item">
-              <a href="javascript:;">
+            <li class="description-list-item" ref="description">
+              <a href="javascript:;" @click="toggleTab($event)">
                 SIZE CHART
                 <i class="iconfont icon-add-o"></i>
               </a>
@@ -184,8 +184,8 @@
                 </p>
               </div>
             </li>
-            <li class="description-list-item">
-              <a href="javascript:;">
+            <li class="description-list-item" ref="description">
+              <a href="javascript:;" @click="toggleTab($event)">
                 SHIPPING & RETURN
                 <i class="iconfont icon-add-o"></i>
               </a>
@@ -241,6 +241,7 @@ export default {
       product: {
         info: {}
       },
+      // 产品图片轮播配置
       proudctBanner: {
         paginationClickable: true,
         effect: 'coverflow',
@@ -256,6 +257,7 @@ export default {
         prevButton: null,
         nextButton: null
       },
+      // solo like 轮播配置
       likeBanner: {
         pagination: '.swiper-pagination',
         slidesPerView: 3,
@@ -263,19 +265,69 @@ export default {
         spaceBetween: 5,
         prevButton: '.swiper-button-prev',
         nextButton: '.swiper-button-next'
-      }
+      },
+      selectColorIndex: 0,
+      selectColorVal: '',
+      selectSzieIndex: 0,
+      selectSzieVal: ''
     }
   },
   created () {
     let vm = this
     console.log(vm.$route.params)
+    // 获取本页面数据
     vm.$http.post('/api/product').then(function (response) {
       if (response.status === 200) {
         vm.product = response.data
+        vm.selectColorVal = vm.product.info.color[0]
+        vm.selectSzieVal = vm.product.info.size[0]
       }
     }).catch(function (error) {
       console.log(error)
     })
+  },
+  methods: {
+    changeColor: function (colorIndex, colorItem) {
+      this.selectColorIndex = colorIndex
+      this.selectColorVal = colorItem
+    },
+    changeSzie: function (szieIndex, szieItem) {
+      this.selectSzieIndex = szieIndex
+      this.selectSzieVal = szieItem
+    },
+    changeNum: function (type) {
+      if (type === 'add') {
+        this.product.info.qty++
+      } else {
+        if (this.product.info.qty > 0 && this.product.info.qty !== 1) {
+          this.product.info.qty--
+        }
+      }
+    },
+    toggleTab: function (event) {
+      if (event.target.nextSibling.nextSibling.style.display === 'block') {
+        event.target.childNodes[1].className = 'iconfont icon-add-o'
+        event.target.nextSibling.nextSibling.style.display = 'none'
+      } else {
+        event.target.nextSibling.nextSibling.style.display = 'block'
+        event.target.childNodes[1].className = 'iconfont icon-minus-o'
+      }
+    },
+    submite: function () {
+      let par = {}
+      let vm = this
+      par.suk = vm.product.info.sku
+      par.color = vm.selectColorVal
+      par.size = vm.selectSzieVal
+      par.qty = vm.product.info.qty
+      vm.$http.post('/api/cart', par).then(function (response) {
+        if (response.status === 200) {
+          vm.$router.push({ path: '/cart' })
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+    }
   }
 }
 </script>

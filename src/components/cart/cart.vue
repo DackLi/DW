@@ -55,7 +55,12 @@
           </ul>
           <!--S Free Tip -->
           <p class="free-shipping-tip">
-            <span>{{freeShipping}}</span>
+            <template v-if="this.totalPrice >= 99">
+              <span>FREE SHIPPING!</span>
+            </template>
+            <template v-else>
+              You're <span>US${{freeShipping}}</span> from FREE SHIPPING!
+            </template>
           </p>
           <!--E Free Tip -->
           <!--S Cart Order -->
@@ -78,6 +83,19 @@
             </div>
           </div>
           <!--E Cart Order -->
+
+          <!--S Bottom Pay And Go Address -->
+          <div class="bottom-footer">
+            <div class="group-title">
+              Total: <span>US${{getTotalPrice}}</span>
+            </div>
+            <div class="bottom-btn">
+              <button class="paypal-btn"></button>
+              <span>OR</span>
+              <button class="check-btn" @click="pay">CHECK OUT</button>
+            </div>
+          </div>
+          <!--E Bottom Pay And Go Address -->
         </div>
       </div>
     </div>
@@ -133,12 +151,8 @@ export default {
       }
     },
     freeShipping: function () {
-      if (this.totalPrice >= 99) {
-        return 'FREE SHIPPING!'
-      } else {
-        let freeShippingPrice = (99 - this.totalPrice).toFixed(2)
-        return `You're US$${freeShippingPrice} from FREE SHIPPING!`
-      }
+      let freeShippingPrice = (99 - this.totalPrice).toFixed(2)
+      return freeShippingPrice
     }
   },
   methods: {
@@ -153,6 +167,20 @@ export default {
     },
     delectPrice: function (cartItem, index) {
       this.cart.cartList.splice(cartItem, 1)
+    },
+    pay: function () {
+      let par = {}
+      let vm = this
+      par.cart = vm.cart
+      console.log(vm.cart)
+      vm.$http.post('/api/cart', par).then(function (response) {
+        if (response.status === 200) {
+          vm.$router.push({ path: '/address' })
+          console.log(vm.cart)
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
     }
   }
 }
@@ -299,6 +327,50 @@ export default {
         .display-flex;
         .align-items(center);
         .justify-content(space-between);
+      }
+    }
+    .bottom-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-top: 1px solid #eee;
+      font-size: .4rem;
+      padding: 0rem 0.3rem 0.3rem;
+      z-index: 50;
+      .group-title {
+        line-height: 1rem;
+        text-align: center;
+        span {
+          color: #d0011b;
+          font-weight: 700;
+        }
+      }
+      .bottom-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        button {
+          transition: background-color .3s;
+          outline: 0;
+          cursor: pointer;
+          flex: 0 0 43%;
+          height: 1rem;
+          font-weight: 700;
+          text-decoration: none;
+          text-align: center;
+          font-size: 0.4rem;
+          color: #fff;
+          border: none;
+        }
+        .paypal-btn {
+          background: url(//sources.aopcdn.com/www/prod/sp/static/v1515121635843/resources-mobile/images/btn-paypal.png) no-repeat;
+          background-size: 100% 100%;
+        }
+        .check-btn {
+          background-color: #000;
+        }
       }
     }
   }
